@@ -1,9 +1,18 @@
 // BuildScript.cs
 // ─────────────────────────────────────────────────────────────────────────────
-// Automatiza el Build del minijuego desde el menú de Unity.
+// Automatiza el Build del minijuego desde el menú de Unity O desde la nube
+// (GitHub Actions / game-ci).
 //
-// Uso: Recoge y Gana → Build Windows64
-// Salida: ../Build/RecogeYGana/RecogeYGana.exe (junto a la carpeta del proyecto).
+// Uso local:
+//   • Menú "Recoge y Gana → Build Windows64"  →  ../Build/RecogeYGana/RecogeYGana.exe
+//
+// Uso en la nube (game-ci):
+//   • El workflow llama a BuildScript.BuildGameCI mediante el parámetro
+//     "buildMethod". La salida queda en build/StandaloneWindows64/RecogeYGana.exe
+//     y se sube como artefacto descargable.
+//
+// En ambos casos, si la escena Main.unity no existe se construye al vuelo
+// llamando a SceneSetup.BuildEverything().
 // ─────────────────────────────────────────────────────────────────────────────
 
 using System.IO;
@@ -13,13 +22,35 @@ using UnityEngine;
 
 public static class BuildScript
 {
-    private const string BuildFolder   = "../Build/RecogeYGana";
-    private const string ExecutableName = "RecogeYGana.exe";
+    private const string LocalOutputDir   = "../Build/RecogeYGana";
+    private const string CloudOutputDir   = "build/StandaloneWindows64";
+    private const string ExecutableName   = "RecogeYGana.exe";
+    private const string ScenePath        = "Assets/Scenes/Main.unity";
 
     [MenuItem("Recoge y Gana/Build Windows64")]
     public static void BuildGame()
     {
-        string outputDir  = Path.GetFullPath(BuildFolder);
+        BuildToFolder(LocalOutputDir);
+    }
+
+    /// <summary>
+    /// Punto de entrada que utiliza GitHub Actions / game-ci.
+    /// </summary>
+    public static void BuildGameCI()
+    {
+        BuildToFolder(CloudOutputDir);
+    }
+
+    private static void BuildToFolder(string folder)
+    {
+        // Garantizar que la escena exista (si el usuario no ha abierto Unity nunca).
+        if (!File.Exists(ScenePath))
+        {
+            Debug.Log("[BuildScript] Main.unity no existe → llamando a SceneSetup.BuildEverything().");
+            SceneSetup.BuildEverything();
+        }
+
+        string outputDir  = Path.GetFullPath(folder);
         string outputPath = Path.Combine(outputDir, ExecutableName);
 
         if (!Directory.Exists(outputDir))
@@ -27,29 +58,26 @@ public static class BuildScript
             Directory.CreateDirectory(outputDir);
         }
 
-        // Recoge todas las escenas activas en Build Settings.
-        EditorBuildSettingsScene[] activeScenes = EditorBuildSettings.scenes;
-        string[] scenes = new string[activeScenes.Length];
-        int idx = 0;
-        foreach (var s in activeScenes)
+        // Recoger escenas habilitadas en Build Settings.
+        EditorBuildSettingsScene[] active = EditorBuildSettings.scenes;
+        var enabled = new System.Collections.Generic.List<string>();
+        foreach (var s in active)
         {
-            if (s.enabled) scenes[idx++] = s.path;
+            if (s.enabled) enabled.Add(s.path);
         }
-        System.Array.Resize(ref scenes, idx);
 
-        if (scenes.Length == 0)
+        if (enabled.Count == 0)
         {
-            Debug.LogError("[BuildScript] No hay escenas habilitadas en Build Settings. " +
-                           "Abre File → Build Settings y agrega la escena principal.");
-            return;
+            // Fallback: si Build Settings está vacío, usar Main.unity directamente.
+            enabled.Add(ScenePath);
         }
 
         BuildPlayerOptions opts = new BuildPlayerOptions
         {
-            scenes           = scenes,
+            scenes           = enabled.ToArray(),
             locationPathName = outputPath,
             target           = BuildTarget.StandaloneWindows64,
-            options          = BuildOptions.None
+            options          = BuildOptions.None,
         };
 
         BuildReport report = BuildPipeline.BuildPlayer(opts);
@@ -62,6 +90,7 @@ public static class BuildScript
         else
         {
             Debug.LogError($"[BuildScript] ✘ Build falló: {summary.result}");
+            EditorApplication.Exit(1);
         }
     }
 }

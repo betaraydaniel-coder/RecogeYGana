@@ -2,33 +2,31 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Maneja la interfaz de usuario del minijuego (Temas 3 y 6).
 //
-// Jerarquía esperada en el Canvas:
+// Jerarquía esperada en el Canvas (la genera SceneSetup automáticamente):
 //   Canvas (Screen Space - Overlay)
 //   ├── ScorePanel        (esquina superior izquierda)
-//   │   └── ScoreText     → TextMeshProUGUI ó Text → asignar al campo "scoreText"
+//   │   └── ScoreText     → UI.Text → asignado al campo "scoreText"
 //   └── WinPanel          (centrado, inactivo al inicio)
 //       ├── Background    (Image semitransparente)
 //       ├── TitleText     → "¡Ganaste!"
 //       └── ReplayButton  → texto "Jugar de nuevo" → OnClick: UIManager.Replay()
 //
-// Asigna cada referencia en el Inspector.
+// Se usa UI.Text clásico (no TextMeshPro) para mantener el proyecto ligero
+// y compatible con cualquier instalación de Unity 2022.3+ sin paquetes extra.
 // ─────────────────────────────────────────────────────────────────────────────
 
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using TMPro;
 
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
 
     [Header("Referencias de UI - Score")]
-    [Tooltip("Texto del marcador (TextMeshProUGUI recomendado). Si usas Text clásico, deja TMP vacío.")]
-    public TextMeshProUGUI scoreText;
-    [Tooltip("Alternativa con UI.Text clásico (opcional).")]
-    public Text scoreTextLegacy;
+    [Tooltip("Texto del marcador (UI.Text clásico).")]
+    public Text scoreText;
 
     [Header("Referencias de UI - WinScreen")]
     [Tooltip("Panel raíz que se muestra al ganar (inactivo al iniciar).")]
@@ -67,9 +65,7 @@ public class UIManager : MonoBehaviour
     public void UpdateScore(int collected, int total)
     {
         string texto = $"\u2726 {collected} / {total}";
-
-        if (scoreText != null)        scoreText.text       = texto;
-        if (scoreTextLegacy != null)  scoreTextLegacy.text = texto;
+        if (scoreText != null) scoreText.text = texto;
     }
 
     /// <summary>
