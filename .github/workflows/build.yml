@@ -1,0 +1,60 @@
+name: Build Windows64
+
+on:
+  push:
+    branches:
+      - main
+      - "cursor/**"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build StandaloneWindows64
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # ─── Cache de la carpeta Library (acelera builds posteriores) ─────────
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-RecogeYGana-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-RecogeYGana-
+            Library-
+
+      # ─── Build con game-ci ────────────────────────────────────────────────
+      # Requiere los siguientes Secrets en el repositorio:
+      #   • UNITY_LICENSE   → contenido del archivo .ulf de Unity Personal
+      #   • UNITY_EMAIL     → el email de tu cuenta Unity
+      #   • UNITY_PASSWORD  → la contraseña de tu cuenta Unity
+      # Ver el README.md sección "Build en la nube" para el paso a paso.
+      - name: Build Unity Project
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: 2022.3.20f1
+          targetPlatform: StandaloneWindows64
+          buildName: RecogeYGana
+          buildMethod: BuildScript.BuildGameCI
+          allowDirtyBuild: true
+
+      # ─── Subir el .exe (y archivos asociados) como artefacto ──────────────
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RecogeYGana-Windows64
+          path: build/StandaloneWindows64
+          if-no-files-found: error
+          retention-days: 14
