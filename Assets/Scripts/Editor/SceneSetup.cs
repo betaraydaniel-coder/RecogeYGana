@@ -62,7 +62,7 @@ public static class SceneSetup
 
         // 3. Escena vacía.
         Directory.CreateDirectory(ScenesFolder);
-        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneSetup.Single);
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
         // 4. Cargar materiales (ya creados en el paso 1).
         Material matGround = Load<Material>("Assets/Materials/MatGround.mat");
