@@ -40,6 +40,10 @@
 *.unitypackage
 *.app
 
+# Archivos generados por Python
+__pycache__/
+*.py[cod]
+
 # Archivos del sistema operativo
 .DS_Store
 Thumbs.db
