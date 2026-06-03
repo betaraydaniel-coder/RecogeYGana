@@ -7,7 +7,9 @@ This folder contains an Excel-compatible, all-in-one HOA and condominium associa
 | File | Purpose |
 | --- | --- |
 | `HOA_Master_Database_Template.xlsx` | Editable Excel workbook for HOA operations. |
+| `HOA_Master_Database_Template_Compatible.xlsx` | Safer plain-workbook edition for older Excel versions, Google Sheets, Apple Numbers, and mobile viewers. |
 | `generate_hoa_workbook.py` | Python generator used to rebuild or customize the workbook. |
+| `generate_hoa_compatible_workbook.py` | Python generator used to rebuild the maximum-compatibility workbook. |
 | `requirements.txt` | Python dependency needed by the generator. |
 
 ## Workbook coverage
@@ -58,6 +60,7 @@ From the repository root:
 ```bash
 python3 -m pip install -r HOA_Database/requirements.txt
 python3 HOA_Database/generate_hoa_workbook.py
+python3 HOA_Database/generate_hoa_compatible_workbook.py
 ```
 
-The script recreates `HOA_Database/HOA_Master_Database_Template.xlsx`.
+The scripts recreate `HOA_Database/HOA_Master_Database_Template.xlsx` and `HOA_Database/HOA_Master_Database_Template_Compatible.xlsx`.
